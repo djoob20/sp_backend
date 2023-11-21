@@ -106,17 +106,4 @@ public class UserController : ControllerBase
     public void Delete(int id)
     {
     }
-
-    //[AllowAnonymous]
-    //[HttpPost( "Authorize", Name = "AuthorizeActions" )]
-    //public IActionResult AuthUser([FromBody] User user)
-    //{
-    //    var token = _jwtAuthentificationManager.Authenticate( user.Firstname, user.Password );
-    //    if (token == null)
-    //    {
-    //        return Unauthorized();
-    //    }
-
-    //    return Ok( token );
-    //}
 }
