@@ -1,44 +1,39 @@
-﻿using System;
-using StudyPortal.API.Models;
+﻿using StudyPortal.API.Models;
 
-namespace StudyPortal.Test.Fixtures
+namespace StudyPortal.Test.Fixtures;
+
+public static class UsersFixture
 {
-    public static class UsersFixture
+    public static List<User> GetTestUsers()
     {
-        public static List<User> GetTestUsers()
+        return new List<User>
         {
-            return new List<User>()
-            {
-                new (
-                    id:"Dummy UId1",
-                    firstname:"Dummy Fname",
-                    lastname:"Dummy Lname",
-                    email: "Dummy email",
-                    password:"Dummy password",
-                    role:"user"
-                    ),
+            new(
+                "Dummy UId1",
+                "Dummy Fname",
+                "Dummy Lname",
+                "Dummy email",
+                "Dummy password",
+                "user"
+            ),
 
-                new (
-                    id:"Dummy UId2",
-                    firstname:"Dummy Fname",
-                    lastname:"Dummy Lname",
-                    email: "Dummy email",
-                    password:"Dummy password",
-                    role:"user"
-                    ),
+            new(
+                "Dummy UId2",
+                "Dummy Fname",
+                "Dummy Lname",
+                "Dummy email",
+                "Dummy password",
+                "user"
+            ),
 
-                new (
-                    id:"Dummy UId3",
-                    firstname:"Dummy Fname",
-                    lastname:"Dummy Lname",
-                    email: "Dummy email",
-                    password:"Dummy password",
-                    role:"user"
-                    )
-            };
-
-        }
-
+            new(
+                "Dummy UId3",
+                "Dummy Fname",
+                "Dummy Lname",
+                "Dummy email",
+                "Dummy password",
+                "user"
+            )
+        };
     }
 }
-
