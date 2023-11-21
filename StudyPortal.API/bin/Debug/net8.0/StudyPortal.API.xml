@@ -1,0 +1,108 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>StudyPortal.API</name>
+    </assembly>
+    <members>
+        <member name="M:StudyPortal.API.Controllers.ArticleController.GetAllArticles">
+            <summary>
+            Returns all articles.
+            </summary>
+            <returns>List of articles</returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.ArticleController.GetArticleById(System.String)">
+            <summary>
+            Returns a article for a given Id.
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.ArticleController.CreateArticle(StudyPortal.API.Models.Article)">
+            <summary>
+            Add a new article.
+            </summary>
+            <param name="newArticle"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.ArticleController.UpdateArticle(System.String,StudyPortal.API.Models.Article)">
+            <summary>
+            Update an existing article for the given Id.
+            </summary>
+            <param name="id"></param>
+            <param name="updatedArticle"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.ArticleController.DeleteArticle(System.String)">
+            <summary>
+            Delete a article for the given.
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="T:StudyPortal.API.Controllers.AuthController">
+            <summary>
+            Controller for Authenticating with social user account.
+            </summary>
+        </member>
+        <member name="T:StudyPortal.API.Controllers.CourseController">
+            <summary>
+            Controller for managing actions applying for course.
+            </summary>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.CourseController.GetAllCourses">
+            <summary>
+            Returns all course.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.CourseController.GetCourseById(System.String)">
+            <summary>
+            Returns a course for a given Id.
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.CourseController.CreateCourse(StudyPortal.API.Models.Course)">
+            <summary>
+            Add a new course.
+            </summary>
+            <param name="newCourse"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.CourseController.UpdateCourse(System.String,StudyPortal.API.Models.Course)">
+            <summary>
+            Update an existing course for the given Id.
+            </summary>
+            <param name="id"></param>
+            <param name="updatedCourse"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.CourseController.DeleteCourse(System.String)">
+            <summary>
+            Delete a course for the given.
+            </summary>
+            <param name="id"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.UserController.GetAllUsers">
+             <summary>
+             Returns all users.
+             </summary>
+             <returns></returns>
+            [Authorize]
+        </member>
+        <member name="M:StudyPortal.API.Controllers.UserController.GetUserById(System.String)">
+            <summary>
+            Returns user for the given Id.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:StudyPortal.API.Controllers.UserController.CreateUser(StudyPortal.API.Models.User)">
+            <summary>
+            Add a new course.
+            </summary>
+            <param name="newCourse"></param>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
