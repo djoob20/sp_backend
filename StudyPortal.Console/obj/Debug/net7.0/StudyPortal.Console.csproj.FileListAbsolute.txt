@@ -1,0 +1,17 @@
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/StudyPortal.Console
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/StudyPortal.Console.deps.json
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/StudyPortal.Console.runtimeconfig.json
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/StudyPortal.Console.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/StudyPortal.Console.pdb
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/Newtonsoft.Json.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.csproj.AssemblyReference.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.AssemblyInfoInputs.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.AssemblyInfo.cs
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.csproj.CoreCompileInputs.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.csproj.CopyComplete
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/refint/StudyPortal.Console.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.pdb
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/StudyPortal.Console.genruntimeconfig.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/ref/StudyPortal.Console.dll

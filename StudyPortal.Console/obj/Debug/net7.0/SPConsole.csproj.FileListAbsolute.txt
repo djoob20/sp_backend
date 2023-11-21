@@ -1,0 +1,17 @@
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/SPConsole
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/SPConsole.deps.json
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/SPConsole.runtimeconfig.json
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/SPConsole.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/SPConsole.pdb
+/Users/dembadiop/Projects/StudyPortal/SPConsole/bin/Debug/net7.0/Newtonsoft.Json.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.csproj.AssemblyReference.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.GeneratedMSBuildEditorConfig.editorconfig
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.AssemblyInfoInputs.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.AssemblyInfo.cs
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.csproj.CoreCompileInputs.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.csproj.CopyComplete
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/refint/SPConsole.dll
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.pdb
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/SPConsole.genruntimeconfig.cache
+/Users/dembadiop/Projects/StudyPortal/SPConsole/obj/Debug/net7.0/ref/SPConsole.dll
