@@ -35,6 +35,8 @@ ipch/
 *.bak.*
 *.bak
 *.idea
+*.dll
+*.cache
 
 #Tools
 _ReSharper.*
