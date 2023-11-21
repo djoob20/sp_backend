@@ -1,19 +1,16 @@
-﻿using System;
-using StudyPortal.API.Models;
+﻿using StudyPortal.API.Models;
 
-namespace StudyPortal.API.Services
+namespace StudyPortal.API.Services;
+
+public interface ISubjectsService<T> where T : Subjects
 {
-    public interface ISubjectsService<T> where T : Subjects
-    {
-        public Task<List<T>> GetAsync();
+    public Task<List<T>> GetAsync();
 
-        public Task<T?> GetAsync(string id);
+    public Task<T?> GetAsync(string id);
 
-        public Task CreateAsync(T newSubject);
+    public Task CreateAsync(T newSubject);
 
-        public Task UpdateAsync(string id, T updatedSubject);
+    public Task UpdateAsync(string id, T updatedSubject);
 
-        public Task DeleteAsync(string id);
-    }
+    public Task DeleteAsync(string id);
 }
-

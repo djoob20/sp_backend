@@ -3,7 +3,7 @@ using StudyPortal.API.Configs;
 
 namespace StudyPortal.API.Services;
 
-public class AuthService: AbstractService
+public class AuthService : AbstractService
 {
     public AuthService(IOptions<StudyPortalDatabaseSettings> settings) : base(settings)
     {

@@ -6,7 +6,6 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
 using StudyPortal.API.Configs;
 using StudyPortal.API.Models;
 using StudyPortal.API.Services;
@@ -14,17 +13,17 @@ using StudyPortal.API.Services;
 namespace StudyPortal.API.Controllers;
 
 /// <summary>
-/// Controller for Authenticating with social user account.
+///     Controller for Authenticating with social user account.
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private static List<AuthUser> userList = new List<AuthUser>();
+    private static readonly List<AuthUser> userList = new();
 
     private readonly IOptions<StudyPortalDatabaseSettings> _settings;
-    private readonly IUserService _userService;
     private readonly List<User> _users;
+    private readonly IUserService _userService;
 
     public AuthController(IOptions<StudyPortalDatabaseSettings> settings, IUserService userService)
     {
@@ -38,17 +37,11 @@ public class AuthController : ControllerBase
     {
         var user = userList.Where(x => x.UserName == model.UserName).FirstOrDefault();
 
-        if (user == null)
-        {
-            return BadRequest("Username Or Password Was Invalid");
-        }
+        if (user == null) return BadRequest("Username Or Password Was Invalid");
 
         var match = CheckPassword(model.Password, user);
 
-        if (!match)
-        {
-            return BadRequest("Username Or Password Was Invalid");
-        }
+        if (!match) return BadRequest("Username Or Password Was Invalid");
 
         JwtGenerator(user);
 
@@ -58,7 +51,7 @@ public class AuthController : ControllerBase
     protected dynamic JwtGenerator(AuthUser user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(this._settings.Value.GoogleSecret);
+        var key = Encoding.ASCII.GetBytes(_settings.Value.GoogleSecret);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -86,7 +79,7 @@ public class AuthController : ControllerBase
 
     private RefreshToken GenerateRefreshToken()
     {
-        var refreshToken = new RefreshToken()
+        var refreshToken = new RefreshToken
         {
             Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
             Expires = DateTime.Now.AddDays(7),
@@ -103,10 +96,7 @@ public class AuthController : ControllerBase
 
         var user = userList.Where(x => x.Token == refreshToken).FirstOrDefault();
 
-        if (user == null || user.TokenExpires < DateTime.Now)
-        {
-            return Unauthorized("Token has expired");
-        }
+        if (user == null || user.TokenExpires < DateTime.Now) return Unauthorized("Token has expired");
 
         JwtGenerator(user);
 
@@ -155,7 +145,7 @@ public class AuthController : ControllerBase
     [HttpPost("LoginWithGoogle")]
     public async Task<IActionResult> LoginWithGoogle([FromBody] string credential)
     {
-        var settings = new GoogleJsonWebSignature.ValidationSettings()
+        var settings = new GoogleJsonWebSignature.ValidationSettings
         {
             Audience = new List<string> { _settings.Value.GoogleClientId }
         };
@@ -169,7 +159,7 @@ public class AuthController : ControllerBase
             authUser = new AuthUser { UserName = payload.Name, Role = "Admin", BirthDay = "01/01/1900" };
             userList.Add(authUser);
         }
-        
+
         var result = _users.Where(u => u.Email == payload.Email && u.Password == payload.JwtId);
         if (!result.Any())
         {
@@ -189,16 +179,16 @@ public class AuthController : ControllerBase
         var token = JwtGenerator(authUser);
 
 
-        return token.Equals("") ? BadRequest():  Ok(token) ;
+        return token.Equals("") ? BadRequest() : Ok(token);
     }
 
     private bool CheckPassword(string password, AuthUser user)
     {
         bool result;
 
-        using (HMACSHA512? hmac = new HMACSHA512(user.PasswordSalt))
+        using (var hmac = new HMACSHA512(user.PasswordSalt))
         {
-            var compute = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            var compute = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
             result = compute.SequenceEqual(user.PasswordHash);
         }
 
@@ -212,11 +202,12 @@ public class AuthController : ControllerBase
 
         if (model.ConfirmPassword == model.Password)
         {
-            using (HMACSHA512? hmac = new HMACSHA512())
+            using (var hmac = new HMACSHA512())
             {
                 authUser.PasswordSalt = hmac.Key;
-                authUser.PasswordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(model.Password));
+                authUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(model.Password));
             }
+
             var result = _users.Where(u => u.Email == model.Email);
             if (!result.Any())
             {
@@ -230,21 +221,15 @@ public class AuthController : ControllerBase
                 };
 
                 await _userService.CreateAsync(user);
-                
+
                 userList.Add(authUser);
 
                 return Ok(user);
             }
-            else
-            {
-                return BadRequest("User already exist");
-            }
-        }
-        else
-        {
-            return BadRequest("Passwords Dont Match");
+
+            return BadRequest("User already exist");
         }
 
-    
+        return BadRequest("Passwords Dont Match");
     }
 }
