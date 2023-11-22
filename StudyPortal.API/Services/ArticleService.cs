@@ -46,5 +46,6 @@ public class ArticleService : AbstractService, ISubjectsService<Article>
     public async Task DeleteAsync(string id)
     {
         await _articleCollection.DeleteOneAsync(x => x.Id == id);
+        
     }
 }

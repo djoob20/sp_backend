@@ -15,6 +15,7 @@ public class CourseService : AbstractService, ISubjectsService<Course>
         _courseCollection =
             mongoDatabase.GetCollection<Course>(studyPortalDatabaseSettings.Value.CoursesCollectionName);
     }
+    
 
 
     public async Task<List<Course>> GetAsync()

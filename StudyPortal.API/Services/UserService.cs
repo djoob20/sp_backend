@@ -28,6 +28,7 @@ public class UserService : AbstractService, IUserService
         _userCollection = mongoDatabase.GetCollection<User>(studyPortalSettings.Value.UsersCollectionName);
         _studyPortalSettings = studyPortalSettings;
     }
+    
 
     public async Task<List<User>> GetAsync()
     {

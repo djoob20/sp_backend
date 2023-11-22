@@ -44,7 +44,6 @@ public class UserController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError,
                 "Error retrieving data from the database");
         }
-        //return null;
     }
 
     /// <summary>
