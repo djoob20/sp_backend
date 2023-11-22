@@ -73,7 +73,7 @@ public class UserController : ControllerBase
     /// <summary>
     ///     Add a new course.
     /// </summary>
-    /// <param name="newCourse"></param>
+    /// <param name="newUser"></param>
     /// <returns></returns>
     [HttpPost(Name = "CreateNewUser")]
     [ProducesResponseType(StatusCodes.Status201Created)]
