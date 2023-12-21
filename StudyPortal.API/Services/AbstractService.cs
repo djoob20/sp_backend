@@ -14,6 +14,5 @@ public class AbstractService
         mongoClient = new MongoClient(settings.Value.ConnectionString);
 
         mongoDatabase = mongoClient.GetDatabase(settings.Value.DatabaseName);
-        
     }
 }

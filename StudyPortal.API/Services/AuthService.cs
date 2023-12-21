@@ -8,5 +8,4 @@ public class AuthService : AbstractService
     public AuthService(IOptions<StudyPortalDatabaseSettings> settings) : base(settings)
     {
     }
-    
 }

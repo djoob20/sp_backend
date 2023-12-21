@@ -13,5 +13,4 @@ public interface ISubjectsService<T> where T : Subjects
     public Task UpdateAsync(string id, T updatedSubject);
 
     public Task DeleteAsync(string id);
-    
 }

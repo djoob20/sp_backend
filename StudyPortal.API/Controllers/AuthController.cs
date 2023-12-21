@@ -19,7 +19,7 @@ namespace StudyPortal.API.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private static readonly List<AuthUser> userList = new();
+    private static readonly List<AuthUser> AuthUsers = new();
 
     private readonly IOptions<StudyPortalDatabaseSettings> _settings;
     private readonly List<User> _users;
@@ -32,12 +32,12 @@ public class AuthController : ControllerBase
         _users = _userService.GetAsync().Result;
     }
 
-    [HttpPost(Name = "Login")]
+    [HttpPost(template: "Login", Name = "Login")]
     public IActionResult Login([FromBody] Login model)
     {
-        var user = userList.Where(x => x.UserName == model.UserName).FirstOrDefault();
+        var user = AuthUsers.Where(x => x.Firstname == model.UserName).FirstOrDefault();
 
-        if (user == null) return BadRequest("Username Or Password Was Invalid");
+        if (user == null) return BadRequest("Username Or password was invalid");
 
         var match = CheckPassword(model.Password, user);
 
@@ -48,7 +48,7 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
-    protected dynamic JwtGenerator(AuthUser user)
+    private dynamic JwtGenerator(AuthUser user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_settings.Value.GoogleSecret);
@@ -57,27 +57,32 @@ public class AuthController : ControllerBase
         {
             Subject = new ClaimsIdentity(new[]
             {
-                new Claim("id", user.UserName), new Claim(ClaimTypes.Role, user.Role),
-                new Claim(ClaimTypes.DateOfBirth, user.BirthDay)
+                new Claim("id", user.Firstname), 
+                new Claim(ClaimTypes.Role, user.Role)
             }),
             Expires = DateTime.UtcNow.AddDays(7),
-            SigningCredentials =
-                new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        var encrypterToken = tokenHandler.WriteToken(token);
+        var encryptedToken = tokenHandler.WriteToken(token);
 
 
-        SetJWT(encrypterToken);
+        SetJwt(encryptedToken);
 
         var refreshToken = GenerateRefreshToken();
 
         SetRefreshToken(refreshToken, user);
 
-        return new { token = encrypterToken, username = user.UserName };
+        return new
+        {
+            firstname = user.Firstname,
+            lastname = user.Lastname,
+            token = encryptedToken, 
+            
+        };
     }
 
-    private RefreshToken GenerateRefreshToken()
+    private static RefreshToken GenerateRefreshToken()
     {
         var refreshToken = new RefreshToken
         {
@@ -94,7 +99,7 @@ public class AuthController : ControllerBase
     {
         var refreshToken = Request.Cookies["X-Refresh-Token"];
 
-        var user = userList.Where(x => x.Token == refreshToken).FirstOrDefault();
+        var user = AuthUsers.Where(x => x.Token == refreshToken).FirstOrDefault();
 
         if (user == null || user.TokenExpires < DateTime.Now) return Unauthorized("Token has expired");
 
@@ -115,12 +120,13 @@ public class AuthController : ControllerBase
                 SameSite = SameSiteMode.None
             });
 
-        userList.Where(x => x.UserName == user.UserName).First().Token = refreshToken.Token;
-        userList.Where(x => x.UserName == user.UserName).First().TokenCreated = refreshToken.Created;
-        userList.Where(x => x.UserName == user.UserName).First().TokenExpires = refreshToken.Expires;
+        var authUser = AuthUsers.First(x => x.Email == user.Email);
+        authUser.Token = refreshToken.Token;
+        authUser.TokenCreated = refreshToken.Created;
+        authUser.TokenExpires = refreshToken.Expires;
     }
 
-    protected void SetJWT(string encrypterToken)
+    private void SetJwt(string encrypterToken)
     {
         HttpContext.Response.Cookies.Append("X-Access-Token", encrypterToken,
             new CookieOptions
@@ -136,7 +142,7 @@ public class AuthController : ControllerBase
     [HttpDelete("RevokeToken/{username}")]
     public async Task<IActionResult> RevokeToken(string username)
     {
-        userList.Where(x => x.UserName == username).First().Token = "";
+        AuthUsers.First(x => x.Firstname == username).Token = "";
 
         return Ok();
     }
@@ -152,15 +158,21 @@ public class AuthController : ControllerBase
 
         var payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
 
-        var authUser = userList.Where(x => x.UserName == payload.Name).FirstOrDefault();
+        var authUser = AuthUsers.FirstOrDefault(x => x.Email == payload.Email);
 
         if (authUser == null)
         {
-            authUser = new AuthUser { UserName = payload.Name, Role = "Admin", BirthDay = "01/01/1900" };
-            userList.Add(authUser);
+            authUser = new AuthUser
+            {
+                Firstname = payload.GivenName,
+                Lastname = payload.FamilyName,
+                Role = "user"
+            };
+            AuthUsers.Add(authUser);
         }
 
         var result = _users.Where(u => u.Email == payload.Email && u.Password == payload.JwtId);
+        
         if (!result.Any())
         {
             var user = new User
@@ -169,7 +181,7 @@ public class AuthController : ControllerBase
                 Lastname = payload.FamilyName,
                 Email = payload.Email,
                 Password = payload.JwtId,
-                Role = "unknown"
+                Role = "user"
             };
 
             await _userService.CreateAsync(user);
@@ -182,7 +194,7 @@ public class AuthController : ControllerBase
         return token.Equals("") ? BadRequest() : Ok(token);
     }
 
-    private bool CheckPassword(string password, AuthUser user)
+    private static bool CheckPassword(string password, AuthUser user)
     {
         bool result;
 
@@ -195,41 +207,53 @@ public class AuthController : ControllerBase
         return result;
     }
 
-    [HttpPost("Register")]
+    [HttpPost("Register", Name = "RegisterNewUser")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] Register model)
     {
-        var authUser = new AuthUser { UserName = model.Firstname, Role = model.Role, BirthDay = model.BirthDay };
-
-        if (model.ConfirmPassword == model.Password)
+        var result = _users.Where(u => u.Email == model.Email);
+        if (result.Any())
         {
-            using (var hmac = new HMACSHA512())
-            {
-                authUser.PasswordSalt = hmac.Key;
-                authUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(model.Password));
-            }
-
-            var result = _users.Where(u => u.Email == model.Email);
-            if (!result.Any())
-            {
-                var user = new User
-                {
-                    Firstname = model.Firstname,
-                    Lastname = model.Lastname,
-                    Email = model.Email,
-                    Password = model.Password,
-                    Role = "user"
-                };
-
-                await _userService.CreateAsync(user);
-
-                userList.Add(authUser);
-
-                return Ok(user);
-            }
-
-            return BadRequest("User already exist");
+            return BadRequest("User already exist!");
         }
-
-        return BadRequest("Passwords Dont Match");
+        
+        if (model.ConfirmPassword != model.Password)
+        {
+            return BadRequest("Passwords Dont Match");
+        }
+        
+        //Create new user
+        var user = new User
+        {
+            Firstname = model.Firstname,
+            Lastname = model.Lastname,
+            Email = model.Email,
+            Password = model.Password,
+            Role = "utilisateur"
+        };
+        
+        //Add user into  the  database.
+        await _userService.CreateAsync(user);
+        _users.Add(user);
+        
+        //Create authenticated user
+        var authUser = new AuthUser
+        {
+            Firstname = model.Firstname,
+            Lastname = model.Lastname,
+            Role = model.Role
+        };
+        
+        using (var hmac = new HMACSHA512())
+        {
+            authUser.PasswordSalt = hmac.Key;
+            authUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(model.Password));
+        }
+        AuthUsers.Add(authUser);
+        
+        var token = JwtGenerator(authUser);
+               
+        return token.Equals("") ? BadRequest() : Ok(token);
     }
 }
