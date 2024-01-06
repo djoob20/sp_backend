@@ -16,6 +16,7 @@ builder.Services.Configure<StudyPortalDatabaseSettings>(
 builder.Services.AddTransient<ISubjectsService<Course>, CourseService>();
 builder.Services.AddTransient<ISubjectsService<Article>, ArticleService>();
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IAuthService, AuthService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

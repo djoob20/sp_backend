@@ -1,12 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using StudyPortal.API.Configs;
+
 using StudyPortal.API.Models;
 using StudyPortal.API.Services;
 
@@ -21,123 +17,89 @@ public class AuthController : ControllerBase
 {
     private static readonly List<AuthUser> AuthUsers = new();
 
-    private readonly IOptions<StudyPortalDatabaseSettings> _settings;
+
     private readonly List<User> _users;
     private readonly IUserService _userService;
+    private readonly IAuthService _authService;
 
-    public AuthController(IOptions<StudyPortalDatabaseSettings> settings, IUserService userService)
+    public AuthController(IUserService userService, IAuthService authService)
     {
-        _settings = settings;
+
         _userService = userService;
+        _authService = authService;
+        
         _users = _userService.GetAsync().Result;
     }
 
     [HttpPost(template: "Login", Name = "Login")]
     public IActionResult Login([FromBody] Login model)
     {
-        var user = AuthUsers.Where(x => x.Firstname == model.UserName).FirstOrDefault();
-
-        if (user == null) return BadRequest("Username Or password was invalid");
-
-        var match = CheckPassword(model.Password, user);
-
-        if (!match) return BadRequest("Username Or Password Was Invalid");
-
-        JwtGenerator(user);
-
-        return Ok();
-    }
-
-    private dynamic JwtGenerator(AuthUser user)
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_settings.Value.GoogleSecret);
-
-        var tokenDescriptor = new SecurityTokenDescriptor
+        try
         {
-            Subject = new ClaimsIdentity(new[]
+            var user = _users.FirstOrDefault(x => x.Email == model.Email);
+
+            if (user == null)
             {
-                new Claim("id", user.Firstname), 
-                new Claim(ClaimTypes.Role, user.Role)
-            }),
-            Expires = DateTime.UtcNow.AddDays(7),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha512Signature)
-        };
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var encryptedToken = tokenHandler.WriteToken(token);
+                return BadRequest("User dos not exist!");
+            }
 
+            var authUser = AuthUsers.FirstOrDefault(x => x.Email == model.Email);
 
-        SetJwt(encryptedToken);
+            if (authUser == null)
+            {
+                authUser = new AuthUser
+                {
+                    Firstname = user.Firstname,
+                    Lastname = user.Lastname,
+                    Email = model.Email,
+                    Role = user.Role
+                };
 
-        var refreshToken = GenerateRefreshToken();
+                using (var hmac = new HMACSHA512())
+                {
+                    authUser.PasswordSalt = hmac.Key;
+                    authUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(model.Password));
+                }
+                
+                AuthUsers.Add(authUser);
+            }
 
-        SetRefreshToken(refreshToken, user);
+            var match = _authService.CheckPassword(model.Password, authUser);
 
-        return new
+            if (!match)
+            {
+                return BadRequest("Email Or Password was Invalid");
+            }
+
+            var token = _authService.JwtGenerator(authUser, AuthUsers);
+
+            return token.Equals("") ? BadRequest() : Ok(token);
+        }
+        catch (Exception)
         {
-            firstname = user.Firstname,
-            lastname = user.Lastname,
-            token = encryptedToken, 
-            
-        };
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Error retrieving data from the database");
+        }
     }
 
-    private static RefreshToken GenerateRefreshToken()
-    {
-        var refreshToken = new RefreshToken
-        {
-            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-            Expires = DateTime.Now.AddDays(7),
-            Created = DateTime.Now
-        };
-
-        return refreshToken;
-    }
-
+    
     [HttpGet("RefreshToken")]
     public async Task<ActionResult<string>> RefreshToken()
     {
         var refreshToken = Request.Cookies["X-Refresh-Token"];
 
-        var user = AuthUsers.Where(x => x.Token == refreshToken).FirstOrDefault();
+        var user = AuthUsers.FirstOrDefault(x => x.Token == refreshToken);
 
-        if (user == null || user.TokenExpires < DateTime.Now) return Unauthorized("Token has expired");
+        if (user == null || user.TokenExpires < DateTime.Now)
+        {
+            return Unauthorized("Token has expired");
+        }
 
-        JwtGenerator(user);
+        _authService.JwtGenerator(user, AuthUsers);
 
         return Ok();
     }
-
-    protected void SetRefreshToken(RefreshToken refreshToken, AuthUser user)
-    {
-        HttpContext.Response.Cookies.Append("X-Refresh-Token", refreshToken.Token,
-            new CookieOptions
-            {
-                Expires = refreshToken.Expires,
-                HttpOnly = true,
-                Secure = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.None
-            });
-
-        var authUser = AuthUsers.First(x => x.Email == user.Email);
-        authUser.Token = refreshToken.Token;
-        authUser.TokenCreated = refreshToken.Created;
-        authUser.TokenExpires = refreshToken.Expires;
-    }
-
-    private void SetJwt(string encrypterToken)
-    {
-        HttpContext.Response.Cookies.Append("X-Access-Token", encrypterToken,
-            new CookieOptions
-            {
-                Expires = DateTime.Now.AddMinutes(15),
-                HttpOnly = true,
-                Secure = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.None
-            });
-    }
+    
 
     [HttpDelete("RevokeToken/{username}")]
     public async Task<IActionResult> RevokeToken(string username)
@@ -151,60 +113,59 @@ public class AuthController : ControllerBase
     [HttpPost("LoginWithGoogle")]
     public async Task<IActionResult> LoginWithGoogle([FromBody] string credential)
     {
-        var settings = new GoogleJsonWebSignature.ValidationSettings
+        try
         {
-            Audience = new List<string> { _settings.Value.GoogleClientId }
-        };
-
-        var payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
-
-        var authUser = AuthUsers.FirstOrDefault(x => x.Email == payload.Email);
-
-        if (authUser == null)
-        {
-            authUser = new AuthUser
+            var settings = new GoogleJsonWebSignature.ValidationSettings
             {
-                Firstname = payload.GivenName,
-                Lastname = payload.FamilyName,
-                Role = "user"
-            };
-            AuthUsers.Add(authUser);
-        }
-
-        var result = _users.Where(u => u.Email == payload.Email && u.Password == payload.JwtId);
-        
-        if (!result.Any())
-        {
-            var user = new User
-            {
-                Firstname = payload.GivenName,
-                Lastname = payload.FamilyName,
-                Email = payload.Email,
-                Password = payload.JwtId,
-                Role = "user"
+                Audience = new List<string> { _authService.GetGoogleClientId() }
             };
 
-            await _userService.CreateAsync(user);
+            var payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
+
+            var authUser = AuthUsers.FirstOrDefault(x => x.Email == payload.Email);
+
+            if (authUser == null)
+            {
+                authUser = new AuthUser
+                {
+                    Firstname = payload.GivenName,
+                    Lastname = payload.FamilyName,
+                    Email = payload.Email,
+                    Role = "utilisateur",
+                    TokenCreated = DateTime.Now
+                };
+                AuthUsers.Add(authUser);
+            }
+
+            var result = _users.Where(u => u.Email == payload.Email);
+
+            if (!result.Any())
+            {
+                var user = new User
+                {
+                    Firstname = payload.GivenName,
+                    Lastname = payload.FamilyName,
+                    Email = payload.Email,
+                    Password = payload.JwtId,
+                    Role = "utilisateur",
+                    AccountType = IAuthService.GOOGLE_ACCOUNT
+                };
+                
+
+                await _userService.CreateAsync(user);
+                _users.Add(user);
+            }
+
+
+            var token = _authService.JwtGenerator(authUser, AuthUsers);
+            
+            return token.Equals("") ? BadRequest() : Ok(token);
         }
-
-
-        var token = JwtGenerator(authUser);
-
-
-        return token.Equals("") ? BadRequest() : Ok(token);
-    }
-
-    private static bool CheckPassword(string password, AuthUser user)
-    {
-        bool result;
-
-        using (var hmac = new HMACSHA512(user.PasswordSalt))
+        catch (Exception)
         {
-            var compute = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            result = compute.SequenceEqual(user.PasswordHash);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Error retrieving data from the database");
         }
-
-        return result;
     }
 
     [HttpPost("Register", Name = "RegisterNewUser")]
@@ -212,48 +173,65 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] Register model)
     {
-        var result = _users.Where(u => u.Email == model.Email);
-        if (result.Any())
+        try
         {
-            return BadRequest("User already exist!");
+            if (model.ConfirmPassword != model.Password)
+            {
+                return BadRequest("Passwords Dont Match");
+            }
+
+            var result = _users.FirstOrDefault(u => u.Email == model.Email);
+            
+            if (result != null)
+            {
+                if (result.AccountType != IAuthService.NORMAL_ACCOUNT)
+                {
+                    result.AccountType = IAuthService.NORMAL_ACCOUNT;
+                    await _userService.UpdateAsync(result.Id, result);
+                }
+            }
+            else
+            {
+                var user = _userService.CreateNewUser(model, IAuthService.NORMAL_ACCOUNT);
+
+                //Add user into  the  database.
+                await _userService.CreateAsync(user);
+                //Add user into the current list of user
+                _users.Add(user);
+            }
+
+            var authUser = AuthUsers.FirstOrDefault(au => au.Email == model.Email);
+
+            if (authUser == null)
+            {
+                //Create authenticated user
+                authUser = new AuthUser
+                {
+                    Firstname = model.Firstname,
+                    Lastname = model.Lastname,
+                    Email = model.Email,
+                    Role = model.Role
+                };
+                using (var hmac = new HMACSHA512())
+                {
+                    authUser.PasswordSalt = hmac.Key;
+                    authUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(model.Password));
+                }
+
+                AuthUsers.Add(authUser);
+                
+            }
+
+            var token = _authService.JwtGenerator(authUser, AuthUsers);
+
+            return token.Equals("") ? BadRequest() : Ok(token);
         }
-        
-        if (model.ConfirmPassword != model.Password)
+        catch (Exception)
         {
-            return BadRequest("Passwords Dont Match");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                "Error retrieving data from the database");
         }
-        
-        //Create new user
-        var user = new User
-        {
-            Firstname = model.Firstname,
-            Lastname = model.Lastname,
-            Email = model.Email,
-            Password = model.Password,
-            Role = "utilisateur"
-        };
-        
-        //Add user into  the  database.
-        await _userService.CreateAsync(user);
-        _users.Add(user);
-        
-        //Create authenticated user
-        var authUser = new AuthUser
-        {
-            Firstname = model.Firstname,
-            Lastname = model.Lastname,
-            Role = model.Role
-        };
-        
-        using (var hmac = new HMACSHA512())
-        {
-            authUser.PasswordSalt = hmac.Key;
-            authUser.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(model.Password));
-        }
-        AuthUsers.Add(authUser);
-        
-        var token = JwtGenerator(authUser);
-               
-        return token.Equals("") ? BadRequest() : Ok(token);
     }
+
+   
 }

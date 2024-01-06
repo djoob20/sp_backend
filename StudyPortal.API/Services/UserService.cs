@@ -16,6 +16,7 @@ public interface IUserService
     public Task UpdateAsync(string id, User updatedUser);
 
     public Task DeleteAsync(string id);
+    public User CreateNewUser(Register model, int normalAccount);
 }
 
 public class UserService : AbstractService, IUserService
@@ -54,5 +55,20 @@ public class UserService : AbstractService, IUserService
     public async Task DeleteAsync(string id)
     {
         await _userCollection.DeleteOneAsync(u => u.Id == id);
+    }
+    
+    public User CreateNewUser(Register model, int accountType)
+    {
+        //Create new user
+        var user = new User
+        {
+            Firstname = model.Firstname,
+            Lastname = model.Lastname,
+            Email = model.Email,
+            Password = model.Password,
+            Role = "utilisateur",
+            AccountType = accountType
+        };
+        return user;
     }
 }
